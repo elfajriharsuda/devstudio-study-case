@@ -6,3 +6,4 @@ export * from "./engine";
 export * from "./metrics";
 export * from "./sessionize";
 export * from "./presets";
+export * from "./segments";
