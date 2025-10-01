@@ -1,3 +1,18 @@
+export type RawEvent = {
+	event: string;
+	timestamp: string;
+	[key: string]: unknown; // page, feature, amount, etc.
+};
+
+export type RawUser = {
+	user_id: string;
+	plan_tier?: string;
+	signup_date?: string;
+	last_active_at?: string;
+	events?: RawEvent[];
+	[key: string]: unknown;
+};
+
 export type EventRow = {
 	user_id: string;
 	event: string;
@@ -7,5 +22,12 @@ export type EventRow = {
 };
 
 export type NormalizedEventRow = Omit<EventRow, "timestamp"> & {
-	timestamp: string; // ISO UTC string (e.g., 2025-01-05T12:34:56.000Z)
+	timestamp: string; // ISO UTC string
+};
+
+export type UserMetrics = {
+	userId: string;
+	sessionCount: number;
+	eventCount: number;
+	lastActive: string;
 };

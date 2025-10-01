@@ -85,17 +85,19 @@ styles/
 ---
 
 ## Dataset Mapping
-
-* Input: `public/data/sample_events.json`
-* Expected shape (example):
-
+- Input: `public/data/sample_events.json`
+- Shape (user-centric with embedded events):
 ```json
 {
-  "user_id": "u_123",
-  "event": "page_view",
-  "timestamp": "2025-01-05T12:34:56Z",
-  "session_id": "s_abc",
-  "properties": { "path": "/home", "country": "ID" }
+  "user_id": "u001",
+  "plan_tier": "enterprise",
+  "signup_date": "2024-08-30T06:20:03.383Z",
+  "last_active_at": "2025-07-04T17:18:34.745Z",
+  "events": [
+    { "event": "signup", "timestamp": "2024-08-30T06:20:03.383Z" },
+    { "event": "page_view", "page": "/features", "timestamp": "2025-07-17T23:13:11.804Z" },
+    { "event": "payment", "amount": 200, "timestamp": "2025-08-01T07:07:34.998Z" }
+  ]
 }
 ```
 

@@ -1,6 +1,6 @@
 import { DATA_URL } from "@/lib/constants";
-import type { EventRow, NormalizedEventRow } from "@/lib/types";
-import { normalizeRows } from "@/lib/dataset/normalize";
+import type { RawUser, NormalizedEventRow } from "@/lib/types";
+import { normalizeRowsFromUsers } from "@/lib/dataset/normalize";
 
 export async function loadDataset(
 	noStore = true,
@@ -9,6 +9,7 @@ export async function loadDataset(
 		cache: noStore ? "no-store" : "force-cache",
 	});
 	if (!res.ok) throw new Error(`Failed to load dataset: ${res.status}`);
-	const data = (await res.json()) as EventRow[];
-	return normalizeRows(data);
+	const data = (await res.json()) as unknown;
+	const users = Array.isArray(data) ? (data as RawUser[]) : [];
+	return normalizeRowsFromUsers(users);
 }
