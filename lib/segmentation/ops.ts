@@ -47,13 +47,15 @@ function matchRegex(left: unknown, right: unknown): boolean {
 
 		const spec = String(right ?? "");
 		// support both 'foo' and '/foo/i' specs
-		const m =
-			spec.startsWith("/") && spec.lastIndexOf("/") > 0
-				? spec.slice(1).split("/")
-				: [spec, ""];
-		const pat = m[0] ?? "";
-		const flags = m[1] ?? "";
-		const rx = new RegExp(pat, flags as any);
+		let pattern = spec;
+		let flagSpec = "";
+		if (spec.startsWith("/") && spec.lastIndexOf("/") > 0) {
+			const lastSlash = spec.lastIndexOf("/");
+			pattern = spec.slice(1, lastSlash);
+			flagSpec = spec.slice(lastSlash + 1);
+		}
+		const safeFlags = flagSpec.replace(/[^gimsuy]/g, "");
+		const rx = new RegExp(pattern, safeFlags);
 		return rx.test(toStr(left));
 	} catch {
 		return false;

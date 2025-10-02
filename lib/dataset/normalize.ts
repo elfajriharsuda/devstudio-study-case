@@ -20,6 +20,7 @@ function flattenUsers(users: RawUser[]): EventRow[] {
 			if (!ev || typeof ev.event !== "string") continue;
 			const timestamp = typeof ev.timestamp === "string" ? ev.timestamp : "";
 			const { event, timestamp: _t, ...rest } = ev;
+			void _t;
 			out.push({
 				user_id: u.user_id,
 				event,
