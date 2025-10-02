@@ -15,6 +15,9 @@ export default function HomePage() {
 				<Link className="underline" href="/segments/presets">
 					Predefined Segments
 				</Link>
+				<Link className="underline" href="/segments/builder">
+					Custom Builder
+				</Link>
 			</div>
 		</main>
 	);
