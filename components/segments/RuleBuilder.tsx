@@ -13,6 +13,10 @@ import {
 	toRuleNode,
 } from "./rules/schema";
 import { ConditionRow } from "./RuleControls";
+import { ResultsSummary } from "./ResultsSummary";
+import { DownloadCsvButton } from "./DownloadCsvButton";
+import { UserTable } from "./UserTable";
+import { MatchedEventsTable } from "./MatchedEventsTable";
 
 type RuleBuilderProps = {
 	rows: NormalizedEventRow[];
@@ -33,23 +37,23 @@ export function RuleBuilder({ rows }: RuleBuilderProps) {
 
 	const structureTotals = useMemo(() => summarizeStructure(root), [root]);
 
-	const summaryStats: SummaryStatProps[] = [
-		{
-			label: "Users Matched",
-			value: execution.summary.users,
-			helper: "Distinct users in the dataset",
-		},
-		{
-			label: "Events Matched",
-			value: execution.summary.events,
-			helper: "Filtered by the active rule",
-		},
-		{
-			label: "Sessions (est.)",
-			value: execution.summary.sessions,
-			helper: `Last run ${lastRun}`,
-		},
-	];
+	const datasetUserCount = useMemo(() => {
+		const ids = new Set<string>();
+		for (const row of rows) ids.add(row.user_id);
+		return ids.size;
+	}, [rows]);
+
+	const coverage = useMemo(() => {
+		if (datasetUserCount === 0) return "0.0";
+		return ((execution.summary.users / datasetUserCount) * 100).toFixed(1);
+	}, [datasetUserCount, execution.summary.users]);
+
+	const exportFilename = useMemo(() => {
+		const timestamp = new Date(execution.summary.lastRun)
+			.toISOString()
+			.replace(/[:.]/g, "-");
+		return `rule-builder-${timestamp}.csv`;
+	}, [execution.summary.lastRun]);
 
 	return (
 		<div className="space-y-10">
@@ -64,90 +68,60 @@ export function RuleBuilder({ rows }: RuleBuilderProps) {
 								Design rules visually, validate instantly.
 							</h2>
 							<p className="max-w-xl text-sm text-slate-600 md:text-base">
-								Craft nested AND/OR groups, tune conditions, and see how your segment reacts to sample data without leaving the page.
+								Craft nested AND/OR groups, tune conditions, and see how your
+								segment reacts to sample data without leaving the page.
 							</p>
 						</div>
 					</div>
 
 					<div className="grid gap-3 text-sm">
-						<span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 shadow-inner">
-							Structure
+						<span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-700 shadow">
+							Structure & Cohort
 						</span>
 						<div className="flex flex-wrap gap-3 text-xs">
 							<Pill>{structureTotals.groups} group(s)</Pill>
 							<Pill>{structureTotals.conditions} condition(s)</Pill>
+							<Pill>{execution.summary.users.toLocaleString()} matched users</Pill>
+							<Pill>{coverage}% dataset coverage</Pill>
 						</div>
 					</div>
 				</div>
+		</section>
 
-				<div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{summaryStats.map((stat) => (
-						<SummaryStat key={stat.label} {...stat} />
-					))}
+		<RuleGroupView node={root} onChange={setRoot} isRoot />
+
+		<section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+			<div className="flex flex-wrap items-center gap-3">
+				<div>
+					<h3 className="text-lg font-semibold text-slate-900">
+						Matched Cohort
+					</h3>
+					<p className="text-sm text-slate-500">
+						Results refresh automatically as you refine the rule logic.
+					</p>
 				</div>
-			</section>
-
-			<RuleGroupView node={root} onChange={setRoot} isRoot />
-
-			<section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-lg backdrop-blur">
-				<div className="flex flex-wrap items-center gap-3">
-					<h3 className="text-lg font-semibold text-slate-900">Matched Users</h3>
-					<span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-						{execution.matchedUserIds.length} users
-					</span>
+				<span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+					{execution.matchedUserIds.length} users
+				</span>
+				<div className="ml-auto">
+					<DownloadCsvButton exec={execution} filename={exportFilename} />
 				</div>
-				<p className="mt-1 text-sm text-slate-600">
-					Previewing the first five users that satisfy the current rule tree.
-				</p>
+			</div>
+			<div className="mt-4 text-xs text-slate-700">
+				Last evaluated: {lastRun}
+			</div>
 
-				{execution.matchedUserIds.length === 0 ? (
-					<div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-						No users match the current logic. Try broadening your conditions.
-					</div>
-				) : (
-					<div className="mt-6 grid gap-4 md:grid-cols-2">
-						{execution.matchedUserIds.slice(0, 5).map((id) => {
-							const metrics = execution.metricsByUser[id];
-							return (
-								<article key={id} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-white to-indigo-50/40 p-4 shadow-sm">
-									<header className="flex items-start justify-between">
-										<span className="font-medium text-slate-900">{id}</span>
-										<span className="text-xs uppercase tracking-[0.25em] text-slate-400">
-											User
-										</span>
-									</header>
-									<dl className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-600">
-										<div>
-											<dt className="uppercase tracking-[0.2em]">Events</dt>
-											<dd className="mt-1 text-base font-semibold text-slate-900">
-												{metrics.eventCount}
-											</dd>
-										</div>
-										<div>
-											<dt className="uppercase tracking-[0.2em]">Sessions</dt>
-											<dd className="mt-1 text-base font-semibold text-slate-900">
-												{metrics.sessionCount}
-											</dd>
-										</div>
-										<div className="col-span-2">
-											<dt className="uppercase tracking-[0.2em]">Last Active</dt>
-											<dd className="mt-1 text-sm text-slate-700">{metrics.lastActive}</dd>
-										</div>
-									</dl>
-								</article>
-							);
-						})}
-					</div>
-				)}
+			<div className="mt-6">
+				<ResultsSummary exec={execution} />
+			</div>
 
-				{execution.matchedUserIds.length > 5 && (
-					<div className="mt-4 text-xs text-slate-500">
-						+{execution.matchedUserIds.length - 5} more users not shown in preview
-					</div>
-				)}
-			</section>
-		</div>
-	);
+			<div className="mt-6 space-y-6">
+				<UserTable exec={execution} />
+				<MatchedEventsTable events={execution.matchedEvents} />
+			</div>
+		</section>
+	</div>
+);
 }
 
 type RuleGroupViewProps = {
@@ -157,7 +131,12 @@ type RuleGroupViewProps = {
 	isRoot?: boolean;
 };
 
-function RuleGroupView({ node, onChange, onRemove, isRoot = false }: RuleGroupViewProps) {
+function RuleGroupView({
+	node,
+	onChange,
+	onRemove,
+	isRoot = false,
+}: RuleGroupViewProps) {
 	function updateChild(idx: number, child: UiNode) {
 		const nextChildren = node.children.slice();
 		nextChildren[idx] = child;
@@ -166,7 +145,8 @@ function RuleGroupView({ node, onChange, onRemove, isRoot = false }: RuleGroupVi
 
 	function removeChild(idx: number) {
 		const nextChildren = node.children.filter((_, i) => i !== idx);
-		const normalized = nextChildren.length === 0 ? [makeCondition()] : nextChildren;
+		const normalized =
+			nextChildren.length === 0 ? [makeCondition()] : nextChildren;
 		onChange({ ...node, children: normalized });
 	}
 
@@ -178,26 +158,40 @@ function RuleGroupView({ node, onChange, onRemove, isRoot = false }: RuleGroupVi
 		onChange({ ...node, children: [...node.children, makeGroup(kind)] });
 	}
 
-	function toggleKind() {
-		onChange({ ...node, kind: node.kind === "and" ? "or" : "and" });
+ 	function setKind(kind: "and" | "or") {
+		onChange({ ...node, kind });
 	}
 
 	return (
-		<div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur">
+		<div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
 			<div className="flex flex-wrap items-center gap-3">
 				<span className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em]">
 					{isRoot ? "Root Group" : "Group"}
 				</span>
-				<span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-					{node.kind.toUpperCase()}
-				</span>
-				<button
-					className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100"
-					onClick={toggleKind}
-				>
-					<span aria-hidden>⇆</span>
-					<span>Toggle AND/OR</span>
-				</button>
+			<div className="inline-flex items-center rounded-full border border-indigo-300 bg-indigo-50 p-1 text-xs font-semibold text-indigo-700">
+					<button
+						className={`rounded-full px-3 py-1 transition ${
+							node.kind === "and"
+								? "bg-indigo-600 text-white"
+								: "text-indigo-600 hover:bg-white"
+						}`}
+						onClick={() => setKind("and")}
+						type="button"
+					>
+						AND
+					</button>
+					<button
+						className={`rounded-full px-3 py-1 transition ${
+							node.kind === "or"
+								? "bg-indigo-600 text-white"
+								: "text-indigo-600 hover:bg-white"
+						}`}
+						onClick={() => setKind("or")}
+						type="button"
+					>
+						OR
+					</button>
+				</div>
 				<div className="ml-auto flex flex-wrap gap-2">
 					<button
 						className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-600"
@@ -234,7 +228,10 @@ function RuleGroupView({ node, onChange, onRemove, isRoot = false }: RuleGroupVi
 
 			<div className="mt-6 space-y-4">
 				{node.children.map((child, idx) => (
-					<div key={child.id} className="border-l-2 border-dashed border-indigo-100 pl-4">
+					<div
+						key={child.id}
+						className="border-l-2 border-dashed border-indigo-100 pl-4"
+					>
 						{isGroup(child) ? (
 							<RuleGroupView
 								node={child as UiGroup}
@@ -251,24 +248,6 @@ function RuleGroupView({ node, onChange, onRemove, isRoot = false }: RuleGroupVi
 					</div>
 				))}
 			</div>
-		</div>
-	);
-}
-
-type SummaryStatProps = {
-	label: string;
-	value: number | string;
-	helper?: string;
-};
-
-function SummaryStat({ label, value, helper }: SummaryStatProps) {
-	return (
-		<div className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur">
-			<p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
-				{label}
-			</p>
-			<p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
-			{helper ? <p className="mt-1 text-xs text-slate-500">{helper}</p> : null}
 		</div>
 	);
 }

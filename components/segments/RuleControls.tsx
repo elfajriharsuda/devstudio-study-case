@@ -37,90 +37,58 @@ export function ConditionRow({ cond, onChange, onRemove }: ConditionRowProps) {
 	function handleArrayValueChange(event: ChangeEvent<HTMLInputElement>) {
 		const parts = event.target.value
 			.split(",")
-			.map((part) => parseMaybeNumber(part.trim()));
+			.map((part) => parseMaybeNumber(part.trim()))
+			.filter((part) => part !== "");
 		onChange({ ...cond, value: parts });
 	}
 
 	return (
-		<div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm transition hover:shadow-md">
-			<div className="flex flex-wrap items-start gap-4">
-				<div>
-					<span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-						Property
-					</span>
-					<div className="relative">
-						<select
-							className="min-w-[160px] appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2 pr-8 text-sm font-medium text-slate-700 shadow-inner transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-							value={cond.path}
-							onChange={handlePathChange}
-						>
-							{PROPERTY_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-						<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-							▾
-						</span>
-					</div>
-				</div>
+		<div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+			<select
+				className="border border-slate-300 rounded px-2 py-1 text-sm text-slate-800"
+				value={cond.path}
+				onChange={handlePathChange}
+			>
+				{PROPERTY_OPTIONS.map((option) => (
+					<option key={option.value} value={option.value}>
+						{option.label}
+					</option>
+				))}
+			</select>
 
-				<div>
-					<span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-						Operator
-					</span>
-					<div className="relative">
-						<select
-							className="min-w-[120px] appearance-none rounded-xl border border-slate-300 bg-white px-4 py-2 pr-8 text-sm font-semibold uppercase tracking-[0.22em] text-indigo-600 shadow-inner transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-							value={cond.op}
-							onChange={handleOperatorChange}
-						>
-							{OPERATOR_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-						<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-							▾
-						</span>
-					</div>
-				</div>
+			<select
+				className="border border-slate-300 rounded px-2 py-1 text-sm text-slate-800"
+				value={cond.op}
+				onChange={handleOperatorChange}
+			>
+				{OPERATOR_OPTIONS.map((option) => (
+					<option key={option.value} value={option.value}>
+						{option.label}
+					</option>
+				))}
+			</select>
 
-				<div className="flex-1 min-w-[220px]">
-					<span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-						Value
-					</span>
-					{cond.op === "exists" || cond.op === "nexists" ? (
-						<div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">
-							(no value required)
-						</div>
-					) : cond.op === "in" || cond.op === "nin" ? (
-						<input
-							className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 shadow-inner transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-							placeholder="Add comma-separated values"
-							value={Array.isArray(cond.value) ? cond.value.join(",") : ""}
-							onChange={handleArrayValueChange}
-						/>
-					) : (
-						<input
-							className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 shadow-inner transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-							placeholder="e.g. Trial, 200, 2024-01-01"
-							value={cond.value === undefined ? "" : String(cond.value)}
-							onChange={handleSingleValueChange}
-						/>
-					)}
-				</div>
+			{cond.op === "exists" || cond.op === "nexists" ? (
+				<span className="text-xs text-slate-700">(no value)</span>
+			) : cond.op === "in" || cond.op === "nin" ? (
+				<input
+					className="border rounded px-2 py-1 min-w-[200px]"
+					placeholder="comma-separated values"
+					value={Array.isArray(cond.value) ? cond.value.join(",") : ""}
+					onChange={handleArrayValueChange}
+				/>
+			) : (
+				<input
+					className="border rounded px-2 py-1 min-w-[200px]"
+					placeholder="value (string/number/date/regex)"
+					value={cond.value === undefined ? "" : String(cond.value)}
+					onChange={handleSingleValueChange}
+				/>
+			)}
 
-				<button
-					className="ml-auto inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-100"
-					onClick={onRemove}
-				>
-					<span>Remove</span>
-					<span aria-hidden>×</span>
-				</button>
-			</div>
+			<button className="ml-auto text-red-600 hover:underline" onClick={onRemove}>
+				Remove
+			</button>
 		</div>
 	);
 }
