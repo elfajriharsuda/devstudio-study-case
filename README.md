@@ -17,7 +17,7 @@ Interactive segmentation builder prototype for Momentum’s Product Analytics ca
 * **State**: Local component state + lightweight utils (no global store needed for MVP)
 * **Data**: Static JSON file in `public/data/sample_events.json`
 * **Linting/Formatting**: ESLint v9, eslint-config-next, Prettier (optional)
-* **Tooling**: pnpm/npm, Vercel for deploy
+* **Tooling**: pnpm/npm, Vercel for deploy, Codex AI for assistance, Copilot for suggestions
 
 ---
 
