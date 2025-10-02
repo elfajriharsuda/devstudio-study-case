@@ -29,14 +29,42 @@ export type Not = { kind: "not"; child: RuleNode };
 
 export type RuleNode = Condition | And | Or | Not;
 
+export type SegmentSummary = {
+	users: number;
+	events: number;
+	sessions: number;
+	avgSessionDurationMs: number;
+	lastActive: string;
+	lastRun: string; // ISO
+};
+
 export type SegmentExecution = {
 	matchedEvents: NormalizedEventRow[];
 	matchedUserIds: string[];
 	metricsByUser: Record<string, UserMetrics>;
-	summary: {
-		users: number;
-		events: number;
-		sessions: number;
-		lastRun: string; // ISO
-	};
+	summary: SegmentSummary;
+};
+
+export type MetricOp =
+	| "gt"
+	| "gte"
+	| "lt"
+	| "lte"
+	| "eq"
+	| "neq"
+	| "before"
+	| "after";
+
+export type MetricPredicate = {
+	field: "eventCount" | "sessionCount" | "lastActive";
+	op: MetricOp;
+	value: unknown | (() => unknown);
+};
+
+export type SegmentDefinition = {
+	id: string;
+	label: string;
+	description: string;
+	rule: RuleNode;
+	metricPredicates?: MetricPredicate[];
 };

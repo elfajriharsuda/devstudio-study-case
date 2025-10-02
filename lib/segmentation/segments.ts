@@ -1,5 +1,6 @@
 import type { NormalizedEventRow, UserMetrics } from "@/lib/types";
 import { executeSegment } from "./engine";
+import { summarizeExecution } from "./metrics";
 import type {
 	SegmentDefinition,
 	SegmentExecution,
@@ -89,12 +90,11 @@ export function runPredefinedSegment(
 		matchedEvents: filteredEvents,
 		matchedUserIds: passingUserIds,
 		metricsByUser: filteredMetrics,
-		summary: {
-			users: passingUserIds.length,
-			events: filteredEvents.length,
-			sessions: sumSessions(filteredMetrics),
-			lastRun: base.summary.lastRun,
-		},
+		summary: summarizeExecution(
+			filteredMetrics,
+			filteredEvents,
+			base.summary.lastRun,
+		),
 	};
 }
 
@@ -147,12 +147,4 @@ function numCompare(op: MetricOp, left: number, right: number): boolean {
 		default:
 			return false;
 	}
-}
-
-function sumSessions(metrics: Record<string, UserMetrics>): number {
-	let total = 0;
-	for (const value of Object.values(metrics)) {
-		total += value.sessionCount;
-	}
-	return total;
 }

@@ -30,4 +30,6 @@ export type UserMetrics = {
 	sessionCount: number;
 	eventCount: number;
 	lastActive: string;
+	avgSessionDurationMs: number;
+	totalSessionDurationMs: number;
 };

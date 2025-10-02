@@ -1,8 +1,8 @@
-import type { NormalizedEventRow } from "@/lib/types";
+import type { NormalizedEventRow, UserMetrics } from "@/lib/types";
 import { evalRuleOnEvent } from "./evalRule";
 import type { RuleNode, SegmentExecution } from "./types";
 import { groupByUser } from "@/lib/dataset";
-import { computeUserMetrics, sumSessionsAcrossUsers } from "./metrics";
+import { computeUserMetrics, summarizeExecution } from "./metrics";
 
 /** Execute a rule tree over normalized events. */
 export function executeSegment(
@@ -14,19 +14,15 @@ export function executeSegment(
 
 	// Group matched events by user
 	const grouped = groupByUser(matchedEvents);
-	const metricsByUser: Record<string, any> = {};
+	const metricsByUser: Record<string, UserMetrics> = {};
 	for (const [userId, rows] of grouped.entries()) {
 		metricsByUser[userId] = computeUserMetrics(rows);
 	}
 
 	const matchedUserIds = Array.from(grouped.keys());
 
-	const summary = {
-		users: matchedUserIds.length,
-		events: matchedEvents.length,
-		sessions: sumSessionsAcrossUsers(grouped),
-		lastRun: new Date().toISOString(),
-	};
+	const generatedAt = new Date().toISOString();
+	const summary = summarizeExecution(metricsByUser, matchedEvents, generatedAt);
 
 	return { matchedEvents, matchedUserIds, metricsByUser, summary };
 }
