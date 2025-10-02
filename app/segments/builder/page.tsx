@@ -10,7 +10,7 @@ export default function BuilderPage() {
 		return <div className="p-6 text-red-600">Error: {error}</div>;
 
 	return (
-		<div className="p-6">
+		<div className="p-6 space-y-6">
 			<RuleBuilder rows={rows} />
 		</div>
 	);
