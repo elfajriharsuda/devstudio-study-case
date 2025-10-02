@@ -6,8 +6,7 @@ Interactive segmentation builder prototype for Momentum’s Product Analytics ca
 
 ## Demo
 
-- **DEMO_URL**: https://your-vercel-deployment.example (replace with your published build before submitting)
-
+- **DEMO_URL**: https://devstudio-study-case.vercel.app/
 ---
 
 ## Tech Stack
