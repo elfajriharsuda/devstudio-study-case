@@ -7,13 +7,15 @@ export function ResultsSummary({ exec }: { exec: SegmentExecution }) {
 	const minutes = Math.floor(avgMs / 60000);
 	const seconds = Math.round((avgMs % 60000) / 1000);
 	const avgDisplay = avgMs === 0 ? "—" : `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+	const lastActiveDisplay = formatLastActive(exec.summary.lastActive);
 
 	return (
-		<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+		<div className="grid grid-cols-2 gap-3 md:grid-cols-5">
 			<Stat label="Users" value={exec.summary.users.toLocaleString()} />
 			<Stat label="Events" value={exec.summary.events.toLocaleString()} />
 			<Stat label="Sessions" value={exec.summary.sessions.toLocaleString()} />
 			<Stat label="Avg session" value={avgDisplay} />
+			<Stat label="Last active" value={lastActiveDisplay} />
 		</div>
 	);
 }
@@ -32,4 +34,11 @@ function Stat({ label, value }: StatProps) {
 			<div className="mt-1 text-xl font-semibold text-slate-900">{value}</div>
 		</div>
 	);
+}
+
+function formatLastActive(raw: string): string {
+	if (!raw) return "—";
+	const parsed = Date.parse(raw);
+	if (Number.isNaN(parsed)) return raw;
+	return new Date(parsed).toLocaleString();
 }

@@ -11,11 +11,11 @@ type SortDirection = "asc" | "desc";
 export function UserTable({ exec }: { exec: SegmentExecution }) {
 	const [page, setPage] = useState(0);
 	const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
-	const [sortKey, setSortKey] = useState<UserSortKey>("events");
-	const [sortDir, setSortDir] = useState<SortDirection>("desc");
+	const [sortKey, setSortKey] = useState<UserSortKey | null>(null);
+	const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
 	const rows = useMemo(() => {
-		const unsorted = exec.matchedUserIds.map((userId) => {
+		const base = exec.matchedUserIds.map((userId) => {
 			const metrics = exec.metricsByUser[userId];
 			return {
 				userId,
@@ -26,7 +26,9 @@ export function UserTable({ exec }: { exec: SegmentExecution }) {
 			};
 		});
 
-		const sorted = unsorted.sort((a, b) => {
+		if (!sortKey) return base;
+
+		const sorted = [...base].sort((a, b) => {
 			let cmp = 0;
 			switch (sortKey) {
 				case "user":
@@ -73,14 +75,13 @@ export function UserTable({ exec }: { exec: SegmentExecution }) {
 	const rangeEnd = start + pageRows.length;
 
 	function toggleSort(nextKey: UserSortKey) {
-		setSortKey((prevKey) => {
-			if (prevKey === nextKey) {
-				setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
-				return prevKey;
-			}
-			setSortDir("desc");
-			return nextKey;
-		});
+		if (sortKey === nextKey) {
+			setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
+			return;
+		}
+
+		setSortKey(nextKey);
+		setSortDir("asc");
 	}
 
 	function headerLabel(key: UserSortKey) {
@@ -209,7 +210,16 @@ type PaginationProps = {
 
 function Pagination({ page, pageCount, onPrev, onNext, onGoto }: PaginationProps) {
 	const pages = Array.from({ length: pageCount }, (_, index) => index);
-	const clampedPages = pages.length > 10 ? pages.slice(0, 10) : pages;
+	let startPage = Math.max(0, page - 4);
+	const endPage = Math.min(pageCount, startPage + 10);
+	if (endPage - startPage < 10) {
+		startPage = Math.max(0, endPage - 10);
+	}
+	const visiblePages = pages.slice(startPage, endPage);
+	const showStartBoundary = startPage > 0;
+	const showStartEllipsis = startPage > 1;
+	const showEndBoundary = endPage < pageCount;
+	const showEndEllipsis = endPage < pageCount - 1;
 
 	return (
 		<div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -221,7 +231,22 @@ function Pagination({ page, pageCount, onPrev, onNext, onGoto }: PaginationProps
 				<span aria-hidden>←</span>
 				Prev
 			</button>
-			{clampedPages.map((index) => (
+			{showStartBoundary && (
+				<>
+					<button
+						className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
+							page === 0
+								? "border-indigo-200 bg-indigo-50 text-indigo-600"
+								: "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+						}`}
+						onClick={() => onGoto(0)}
+					>
+						1
+					</button>
+					{showStartEllipsis && <span className="px-2">…</span>}
+				</>
+			)}
+			{visiblePages.map((index) => (
 				<button
 					key={index}
 					className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
@@ -234,8 +259,18 @@ function Pagination({ page, pageCount, onPrev, onNext, onGoto }: PaginationProps
 					{index + 1}
 				</button>
 			))}
-			{pageCount > clampedPages.length && (
-				<span className="px-2">…</span>
+			{showEndEllipsis && <span className="px-2">…</span>}
+			{showEndBoundary && (
+				<button
+					className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
+						page === pageCount - 1
+							? "border-indigo-200 bg-indigo-50 text-indigo-600"
+							: "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+					}`}
+					onClick={() => onGoto(pageCount - 1)}
+				>
+					{pageCount}
+				</button>
 			)}
 			<button
 				className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"

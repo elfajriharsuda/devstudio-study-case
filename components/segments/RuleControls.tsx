@@ -1,7 +1,11 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { OPERATOR_OPTIONS, OperatorValue, PROPERTY_OPTIONS } from "./rules/constants";
+import {
+	OPERATOR_OPTIONS,
+	OperatorValue,
+	PROPERTY_OPTIONS,
+} from "./rules/constants";
 import type { UiCondition } from "./rules/schema";
 
 type ConditionRowProps = {
@@ -72,21 +76,24 @@ export function ConditionRow({ cond, onChange, onRemove }: ConditionRowProps) {
 				<span className="text-xs text-slate-700">(no value)</span>
 			) : cond.op === "in" || cond.op === "nin" ? (
 				<input
-					className="border rounded px-2 py-1 min-w-[200px]"
+					className="border rounded px-2 py-1 min-w-[200px] text-sm text-slate-800"
 					placeholder="comma-separated values"
 					value={Array.isArray(cond.value) ? cond.value.join(",") : ""}
 					onChange={handleArrayValueChange}
 				/>
 			) : (
 				<input
-					className="border rounded px-2 py-1 min-w-[200px]"
+					className="border rounded px-2 py-1 min-w-[200px] text-sm text-slate-800"
 					placeholder="value (string/number/date/regex)"
 					value={cond.value === undefined ? "" : String(cond.value)}
 					onChange={handleSingleValueChange}
 				/>
 			)}
 
-			<button className="ml-auto text-red-600 hover:underline" onClick={onRemove}>
+			<button
+				className="ml-auto text-red-600 hover:underline"
+				onClick={onRemove}
+			>
 				Remove
 			</button>
 		</div>

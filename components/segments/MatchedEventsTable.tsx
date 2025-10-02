@@ -15,11 +15,10 @@ export function MatchedEventsTable({
 	events: NormalizedEventRow[];
 }) {
 	const [page, setPage] = useState(0);
-	const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(
-		DEFAULT_PAGE_SIZE,
-	);
-	const [sortKey, setSortKey] = useState<EventSortKey>("timestamp");
-	const [sortDir, setSortDir] = useState<SortDirection>("desc");
+	const [pageSize, setPageSize] =
+		useState<(typeof PAGE_SIZE_OPTIONS)[number]>(DEFAULT_PAGE_SIZE);
+	const [sortKey, setSortKey] = useState<EventSortKey | null>(null);
+	const [sortDir, setSortDir] = useState<SortDirection>("asc");
 	const [featureFilter, setFeatureFilter] = useState<string>("all");
 
 	const availableFeatures = useMemo(() => {
@@ -50,8 +49,9 @@ export function MatchedEventsTable({
 	}, [pageCount]);
 
 	const sortedEvents = useMemo(() => {
-		const copy = filteredEvents.slice();
-		copy.sort((a, b) => {
+		if (!sortKey) return filteredEvents;
+
+		const copy = filteredEvents.slice().sort((a, b) => {
 			let cmp = 0;
 			switch (sortKey) {
 				case "timestamp": {
@@ -67,7 +67,9 @@ export function MatchedEventsTable({
 					cmp = (a.event || "").localeCompare(b.event || "");
 					break;
 				case "feature":
-					cmp = (featureFromEvent(a) || "").localeCompare(featureFromEvent(b) || "");
+					cmp = (featureFromEvent(a) || "").localeCompare(
+						featureFromEvent(b) || "",
+					);
 					break;
 			}
 
@@ -82,14 +84,13 @@ export function MatchedEventsTable({
 	const rangeEnd = start + paginatedEvents.length;
 
 	function toggleSort(key: EventSortKey) {
-		setSortKey((prevKey) => {
-			if (prevKey === key) {
-				setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
-				return prevKey;
-			}
-			setSortDir("asc");
-			return key;
-		});
+		if (sortKey === key) {
+			setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
+			return;
+		}
+
+		setSortKey(key);
+		setSortDir("asc");
 	}
 
 	function headerLabel(key: EventSortKey) {
@@ -109,10 +110,14 @@ export function MatchedEventsTable({
 					</p>
 				</div>
 				<div className="text-sm text-slate-700">
-					Showing {rangeStart}-{rangeEnd} of {sortedEvents.length.toLocaleString()} events
+					Showing {rangeStart}-{rangeEnd} of{" "}
+					{sortedEvents.length.toLocaleString()} events
 				</div>
 				<div className="flex items-center gap-3 text-sm text-slate-800">
-					<label className="text-slate-500" htmlFor="matched-events-feature-filter">
+					<label
+						className="text-slate-500"
+						htmlFor="matched-events-feature-filter"
+					>
 						Feature
 					</label>
 					<select
@@ -137,9 +142,11 @@ export function MatchedEventsTable({
 						value={pageSize}
 						onChange={(event) =>
 							setPageSize(
-								Number(event.target.value) as (typeof PAGE_SIZE_OPTIONS)[number],
+								Number(
+									event.target.value,
+								) as (typeof PAGE_SIZE_OPTIONS)[number],
 							)
-					}
+						}
 					>
 						{PAGE_SIZE_OPTIONS.map((size) => (
 							<option key={size} value={size}>
@@ -154,14 +161,31 @@ export function MatchedEventsTable({
 				<table className="min-w-full divide-y divide-slate-200 text-sm">
 					<thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
 						<tr>
-							<ThButton active={sortKey === "user"} onClick={() => toggleSort("user")}>User {headerLabel("user")}</ThButton>
-							<ThButton active={sortKey === "event"} onClick={() => toggleSort("event")}>Event {headerLabel("event")}</ThButton>
-							<ThButton className="hidden sm:table-cell" active={sortKey === "feature"} onClick={() => toggleSort("feature")}>
+							<ThButton
+								active={sortKey === "user"}
+								onClick={() => toggleSort("user")}
+							>
+								User {headerLabel("user")}
+							</ThButton>
+							<ThButton
+								active={sortKey === "event"}
+								onClick={() => toggleSort("event")}
+							>
+								Event {headerLabel("event")}
+							</ThButton>
+							<ThButton
+								className="hidden sm:table-cell"
+								active={sortKey === "feature"}
+								onClick={() => toggleSort("feature")}
+							>
 								Feature {headerLabel("feature")}
 							</ThButton>
 							<ThStatic className="hidden lg:table-cell">Page</ThStatic>
 							<ThStatic className="hidden md:table-cell">Session</ThStatic>
-							<ThButton active={sortKey === "timestamp"} onClick={() => toggleSort("timestamp")}>
+							<ThButton
+								active={sortKey === "timestamp"}
+								onClick={() => toggleSort("timestamp")}
+							>
 								Timestamp {headerLabel("timestamp")}
 							</ThButton>
 						</tr>
@@ -185,7 +209,10 @@ export function MatchedEventsTable({
 						))}
 						{paginatedEvents.length === 0 && (
 							<tr>
-								<td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={6}>
+								<td
+									className="px-4 py-6 text-center text-sm text-slate-500"
+									colSpan={6}
+								>
 									No events match this rule yet.
 								</td>
 							</tr>
@@ -224,7 +251,9 @@ function ThButton({ children, onClick, active, className }: ThButtonProps) {
 				type="button"
 				onClick={onClick}
 				className={`inline-flex items-center gap-1 rounded-full px-2 py-1 transition ${
-					active ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-100"
+					active
+						? "bg-indigo-600 text-white"
+						: "text-slate-700 hover:bg-slate-100"
 				}`}
 			>
 				{children}
@@ -247,7 +276,9 @@ type TdProps = {
 
 function Td({ children, mono = false, className }: TdProps) {
 	return (
-		<td className={`px-4 py-3 text-slate-700 ${mono ? "font-mono" : ""} ${className ?? ""}`}>
+		<td
+			className={`px-4 py-3 text-slate-700 ${mono ? "font-mono" : ""} ${className ?? ""}`}
+		>
 			{children}
 		</td>
 	);
@@ -261,9 +292,24 @@ type PaginationProps = {
 	onGoto: (index: number) => void;
 };
 
-function PaginationControls({ page, pageCount, onPrev, onNext, onGoto }: PaginationProps) {
+function PaginationControls({
+	page,
+	pageCount,
+	onPrev,
+	onNext,
+	onGoto,
+}: PaginationProps) {
 	const pages = Array.from({ length: pageCount }, (_, index) => index);
-	const clampedPages = pages.length > 10 ? pages.slice(0, 10) : pages;
+	let startPage = Math.max(0, page - 4);
+	const endPage = Math.min(pageCount, startPage + 10);
+	if (endPage - startPage < 10) {
+		startPage = Math.max(0, endPage - 10);
+	}
+	const visiblePages = pages.slice(startPage, endPage);
+	const showStartBoundary = startPage > 0;
+	const showStartEllipsis = startPage > 1;
+	const showEndBoundary = endPage < pageCount;
+	const showEndEllipsis = endPage < pageCount - 1;
 
 	return (
 		<div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -275,7 +321,22 @@ function PaginationControls({ page, pageCount, onPrev, onNext, onGoto }: Paginat
 				<span aria-hidden>←</span>
 				Prev
 			</button>
-			{clampedPages.map((index) => (
+			{showStartBoundary && (
+				<>
+					<button
+						className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
+							page === 0
+								? "border-indigo-200 bg-indigo-50 text-indigo-600"
+								: "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+						}`}
+						onClick={() => onGoto(0)}
+					>
+						1
+					</button>
+					{showStartEllipsis && <span className="px-2">…</span>}
+				</>
+			)}
+			{visiblePages.map((index) => (
 				<button
 					key={index}
 					className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
@@ -288,7 +349,19 @@ function PaginationControls({ page, pageCount, onPrev, onNext, onGoto }: Paginat
 					{index + 1}
 				</button>
 			))}
-			{pageCount > clampedPages.length && <span className="px-2">…</span>}
+			{showEndEllipsis && <span className="px-2">…</span>}
+			{showEndBoundary && (
+				<button
+					className={`inline-flex items-center rounded-full border px-3 py-1 font-semibold transition ${
+						page === pageCount - 1
+							? "border-indigo-200 bg-indigo-50 text-indigo-600"
+							: "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600"
+					}`}
+					onClick={() => onGoto(pageCount - 1)}
+				>
+					{pageCount}
+				</button>
+			)}
 			<button
 				className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
 				onClick={onNext}

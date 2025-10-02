@@ -35,5 +35,6 @@ export function toRuleNode(ui: UiNode): RuleNode {
 		return { kind: "or", children: ui.children.map(toRuleNode) };
 	}
 	const { id: _id, ...rest } = ui;
+	void _id;
 	return rest;
 }

@@ -16,14 +16,14 @@ export const OPERATOR_OPTIONS = [
 export type OperatorValue = (typeof OPERATOR_OPTIONS)[number]["value"];
 
 export const PROPERTY_OPTIONS = [
-	{ value: "event", label: "event" },
-	{ value: "timestamp", label: "timestamp (ISO)" },
-	{ value: "user_id", label: "user_id" },
+	{ value: "event", label: "Event" },
+	{ value: "timestamp", label: "Timestamp (ISO)" },
+	{ value: "user_id", label: "User id" },
 	// Common properties from our user-centric dataset
-	{ value: "properties.plan_tier", label: "properties.plan_tier" },
-	{ value: "properties.amount", label: "properties.amount" },
-	{ value: "properties.page", label: "properties.page" },
-	{ value: "properties.feature", label: "properties.feature" },
-	{ value: "properties.signup_date", label: "properties.signup_date" },
-	{ value: "properties.last_active_at", label: "properties.last_active_at" },
+	{ value: "properties.plan_tier", label: "Plan tier" },
+	{ value: "properties.amount", label: "Amount" },
+	{ value: "properties.page", label: "Page" },
+	{ value: "properties.feature", label: "Feature" },
+	{ value: "properties.signup_date", label: "Signup date" },
+	{ value: "properties.last_active_at", label: "Last active at" },
 ] as const;

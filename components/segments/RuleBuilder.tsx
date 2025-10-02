@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { NormalizedEventRow } from "@/lib/types";
 import { executeSegment } from "@/lib/segmentation";
 import {
@@ -81,47 +81,49 @@ export function RuleBuilder({ rows }: RuleBuilderProps) {
 						<div className="flex flex-wrap gap-3 text-xs">
 							<Pill>{structureTotals.groups} group(s)</Pill>
 							<Pill>{structureTotals.conditions} condition(s)</Pill>
-							<Pill>{execution.summary.users.toLocaleString()} matched users</Pill>
+							<Pill>
+								{execution.summary.users.toLocaleString()} matched users
+							</Pill>
 							<Pill>{coverage}% dataset coverage</Pill>
 						</div>
 					</div>
 				</div>
-		</section>
+			</section>
 
-		<RuleGroupView node={root} onChange={setRoot} isRoot />
+			<RuleGroupView node={root} onChange={setRoot} isRoot />
 
-		<section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-			<div className="flex flex-wrap items-center gap-3">
-				<div>
-					<h3 className="text-lg font-semibold text-slate-900">
-						Matched Cohort
-					</h3>
-					<p className="text-sm text-slate-500">
-						Results refresh automatically as you refine the rule logic.
-					</p>
+			<section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+				<div className="flex flex-wrap items-center gap-3">
+					<div>
+						<h3 className="text-lg font-semibold text-slate-900">
+							Matched Cohort
+						</h3>
+						<p className="text-sm text-slate-500">
+							Results refresh automatically as you refine the rule logic.
+						</p>
+					</div>
+					<span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+						{execution.matchedUserIds.length} users
+					</span>
+					<div className="ml-auto">
+						<DownloadCsvButton exec={execution} filename={exportFilename} />
+					</div>
 				</div>
-				<span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-					{execution.matchedUserIds.length} users
-				</span>
-				<div className="ml-auto">
-					<DownloadCsvButton exec={execution} filename={exportFilename} />
+				<div className="mt-4 text-xs text-slate-700">
+					Last evaluated: {lastRun}
 				</div>
-			</div>
-			<div className="mt-4 text-xs text-slate-700">
-				Last evaluated: {lastRun}
-			</div>
 
-			<div className="mt-6">
-				<ResultsSummary exec={execution} />
-			</div>
+				<div className="mt-6">
+					<ResultsSummary exec={execution} />
+				</div>
 
-			<div className="mt-6 space-y-6">
-				<UserTable exec={execution} />
-				<MatchedEventsTable events={execution.matchedEvents} />
-			</div>
-		</section>
-	</div>
-);
+				<div className="mt-6 space-y-6">
+					<UserTable exec={execution} />
+					<MatchedEventsTable events={execution.matchedEvents} />
+				</div>
+			</section>
+		</div>
+	);
 }
 
 type RuleGroupViewProps = {
@@ -158,7 +160,7 @@ function RuleGroupView({
 		onChange({ ...node, children: [...node.children, makeGroup(kind)] });
 	}
 
- 	function setKind(kind: "and" | "or") {
+	function setKind(kind: "and" | "or") {
 		onChange({ ...node, kind });
 	}
 
@@ -168,7 +170,7 @@ function RuleGroupView({
 				<span className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em]">
 					{isRoot ? "Root Group" : "Group"}
 				</span>
-			<div className="inline-flex items-center rounded-full border border-indigo-300 bg-indigo-50 p-1 text-xs font-semibold text-indigo-700">
+				<div className="inline-flex items-center rounded-full border border-indigo-300 bg-indigo-50 p-1 text-xs font-semibold text-indigo-700">
 					<button
 						className={`rounded-full px-3 py-1 transition ${
 							node.kind === "and"
@@ -253,7 +255,7 @@ function RuleGroupView({
 }
 
 type PillProps = {
-	children: string | number;
+	children: ReactNode;
 };
 
 function Pill({ children }: PillProps) {
